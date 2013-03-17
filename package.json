@@ -1,0 +1,39 @@
+{
+  "name": "raven",
+  "author": "Longhouse Games",
+  "version": "0.1.0",
+  "description": "Raven - a game server framework",
+  "main": "lib/raven.js",
+  "private": true,
+  "directories": {
+    "lib": "./lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Longhouse-Games/raven.git"
+  },
+  "license": "BSD",
+  "engines": {
+    "node": "~0.8"
+  },
+  "dependencies": {
+    "coffee-script" : ">=1.0.1",
+    "express": "2.5.10",
+    "mongoose": "2.7.0",
+    "requirejs": "2.0.4",
+    "socket.io": "0.9.6",
+    "underscore": "",
+    "moment": "",
+    "cookie": ">=0.0.4",
+    "winston": "",
+    "request": "",
+    "airbrake": "",
+    "node-markdown": ""
+  },
+  "devDependencies": {
+    "jasmine-node" : ">=1.0.26"
+  }
+}
