@@ -82,7 +82,7 @@ requirejs.config({
   }
 });
 
-requirejs(['underscore', 'moment', './lib/checkers'], function(_, moment, Checkers) {
+requirejs(['underscore', 'moment'], function(_, moment) {
 
 // global variables
 var connectedUsers = 0;
@@ -612,13 +612,12 @@ var loadGame = function(dbgame) {
   if (_.isUndefined(dbgame.gameState) || dbgame.gameState === null) {
     logger.info("Creating new game: "+dbgame._id);
     factory = function() {
-      return new Checkers.GameState();
+      return me.game.create();
     };
   } else {
     logger.debug("Restoring old game: "+dbgame._id);
     factory = function() {
-      gameState = new Checkers.GameState();
-      gameState.fromDTO(JSON.parse(dbgame.gameState));
+      gameState = me.game.create(JSON.parse(dbgame.gameState));
       return gameState;
     };
   }
@@ -679,7 +678,7 @@ app.listen(PORT, function() {
   logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
 });
 
-}); // requirejs Checkers
+}); // requirejs
 
   }; // function run()
 
