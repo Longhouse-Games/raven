@@ -1,3 +1,21 @@
+var fs = require('fs'),
+    express = require('express'),
+    logger = require('./lib/logger').logger;
+
+var mongoose = require('mongoose')
+  , socketio = require('socket.io')
+  , assert = require('assert')
+  , cas = require('cas')
+  , cookie = require('cookie')
+  , http_request = require('request')
+  , http = require('http')
+  , airbrake = require('airbrake')
+  , util = require('util');
+
+var _ = require('underscore'),
+    moment = require('moment'),
+    EGSNotifier = require('./lib/egs_notifier');
+
 function init(game) {
 
   var me = this;
@@ -31,10 +49,6 @@ var app;
 
 var use_ssl = false;
 
-var fs = require('fs'),
-    express = require('express'),
-    logger = require('./lib/logger')
-
 if (KEY_FILE && CERT_FILE) {
   logger.info("Using SSL");
   use_ssl = true;
@@ -43,24 +57,17 @@ if (KEY_FILE && CERT_FILE) {
   server_options.key = fs.readFileSync(KEY_FILE);
   server_options.cert = fs.readFileSync(CERT_FILE);
 
-  app = express.createServer(server_options);
+  app = express(server_options);
 } else if ((KEY_FILE && !CERT_FILE) || (CERT_FILE && !KEY_FILE)) {
   throw "If one of KEY_FILE or CERT_FILE are specified, you must supply both of them, not just one";
 } else {
-  app = express.createServer();
+  app = express();
 }
 
 Server = me.game;
 
-var mongoose = require('mongoose')
-  , io = require('socket.io').listen(app)
-  , assert = require('assert')
-  , cas = require('cas')
-  , cookie = require('cookie')
-  , EGSNotifier = require('./lib/egs_notifier')
-  , http_request = require('request')
-  , airbrake = require('airbrake')
-  , util = require('util');
+var server = http.createServer(app);
+var io = socketio.listen(server);
 
 if (AIRBRAKE_API_KEY) {
   var client = airbrake.createClient(AIRBRAKE_API_KEY);
@@ -68,21 +75,6 @@ if (AIRBRAKE_API_KEY) {
   logger.info("Airbrake initialised.");
 //  app.error(client.expressHandler()); SEE: https://github.com/felixge/node-airbrake/issues/25
 }
-
-var requirejs = require('requirejs');
-requirejs.config({
-  nodeRequire: require,
-  paths: {
-    underscore: "./vendor/underscore"
-  },
-  shim: {
-    underscore: {
-      exports: '_'
-    }
-  }
-});
-
-requirejs(['underscore', 'moment'], function(_, moment) {
 
 // global variables
 var connectedUsers = 0;
@@ -207,7 +199,10 @@ function authenticate_with_cas(request, response, callback) {
   var base_url = "https://"+host;
   var casInstance = new cas({
     base_url: base_url,
-    service: hostname
+    service: hostname,
+    https: {
+      rejectUnauthorized: false
+    }
   });
 
   // initial visit
@@ -674,11 +669,10 @@ mongoose.connect('mongodb://localhost/lvg-'+metadata.slug, options, function(err
   }
 });
 
-app.listen(PORT, function() {
+server.listen(PORT, function() {
   logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
 });
 
-}); // requirejs
 
   }; // function run()
 
@@ -687,4 +681,5 @@ app.listen(PORT, function() {
     configure: me.configure
   };
 };
+
 exports.init = init;

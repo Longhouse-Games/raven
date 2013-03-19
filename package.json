@@ -17,21 +17,21 @@
   },
   "license": "BSD",
   "engines": {
-    "node": "~0.8"
+    "node": "~0.10"
   },
   "dependencies": {
-    "coffee-script" : ">=1.0.1",
-    "express": "2.5.10",
-    "mongoose": "2.7.0",
-    "requirejs": "2.0.4",
-    "socket.io": "0.9.6",
-    "underscore": "",
-    "moment": "",
-    "cookie": ">=0.0.4",
-    "winston": "",
-    "request": "",
-    "airbrake": "",
-    "node-markdown": ""
+    "cas": "git://github.com/Longhouse-Games/node-cas.git",
+    "coffee-script" : "",
+    "express": "3.0",
+    "mongoose": "3.6",
+    "socket.io": "0.9",
+    "underscore": "1.4",
+    "moment": "2.0",
+    "cookie": "0.0.5",
+    "winston": "0.6",
+    "request": "2.16",
+    "airbrake": "0.2",
+    "node-markdown": "0.1"
   },
   "devDependencies": {
     "jasmine-node" : ">=1.0.26"
