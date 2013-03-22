@@ -537,6 +537,18 @@ app.get(PREFIX+'/status', function(req, res) {
 });
 app.get(PREFIX+'/lib/*', serve_lib);
 app.get(PREFIX+'/*', serve_assets);
+var debug = function(req, res) {
+  res.header("Content-Type", "text/html");
+  var html = "";
+  html += "<p>Hi! I'm a Raven instance running '"+metadata.name+"' at '"+req.headers.host+"'.</p>";
+  html += "<p>req url: " + req.url +"</p><hr>";
+  html += "<p>Query: <br><pre>"+JSON.stringify(req.query,null,'\t')+"</pre></p><hr>";
+  html += "<p>ENV VARS: <br><pre>" + JSON.stringify(process.env,null,'\t')+"</pre></p>";
+
+  res.send(html);
+};
+app.get(PREFIX+'/', debug);
+app.get('/*', debug);
 
 // successful connection
 io.set('authorization', function (data, accept) {
