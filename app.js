@@ -328,7 +328,7 @@ var egs_response = function(req, res, params, next) {
     if (params.game_id) {
       json.glst = {
         cnt: 1,
-        games: params.game_id
+        game: params.game_id
       };
     }
     res.json(json, code);
