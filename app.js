@@ -547,8 +547,8 @@ var debug = function(req, res) {
 
   res.send(html);
 };
-app.get(PREFIX+'/', debug);
-app.get('/*', debug);
+// app.get(PREFIX+'/', debug);
+// app.get('/*', debug);
 
 // successful connection
 io.set('authorization', function (data, accept) {
