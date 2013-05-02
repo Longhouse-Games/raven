@@ -64,7 +64,7 @@ if (KEY_FILE && CERT_FILE) {
   app = express();
 }
 
-Server = me.game;
+var Game = me.game;
 
 var server = http.createServer(app);
 var io = socketio.listen(server);
@@ -79,7 +79,7 @@ if (AIRBRAKE_API_KEY) {
 // global variables
 var connectedUsers = 0;
 
-var metadata = Server.metadata;
+var metadata = Game.metadata;
 
 // global types
 var Schema = mongoose.Schema;
@@ -628,7 +628,7 @@ var loadGame = function(dbgame) {
       return gameState;
     };
   }
-  return game = new Server.Server(factory, dbgame, egs_notifier);
+  return game = me.game.init(factory, dbgame, egs_notifier);
 }
 
 var handleSessionError = function(socket) {
