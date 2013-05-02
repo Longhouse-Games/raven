@@ -1,7 +1,7 @@
 {
   "name": "raven",
   "author": "Longhouse Games",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Raven - a game server framework",
   "main": "lib/raven.js",
   "private": true,
