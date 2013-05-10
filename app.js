@@ -1,3 +1,7 @@
+/*
+ * TODO Raven uses 'game' for two metaphors: Game function, and instance of Game function.
+ * Let's break it into 'Game' and 'Table'.
+ */
 var fs = require('fs'),
     express = require('express'),
     logger = require('./lib/logger').logger;
@@ -618,17 +622,11 @@ var loadGame = function(dbgame) {
   var factory = null;
   if (_.isUndefined(dbgame.gameState) || dbgame.gameState === null) {
     logger.info("Creating new game: "+dbgame._id);
-    factory = function() {
-      return me.game.create();
-    };
+    return me.game(dbgame);
   } else {
     logger.debug("Restoring old game: "+dbgame._id);
-    factory = function() {
-      gameState = me.game.create(JSON.parse(dbgame.gameState));
-      return gameState;
-    };
+    return me.game(dbgame, JSON.parse(dbgame.gameState));
   }
-  return game = me.game.init(factory, dbgame, egs_notifier);
 }
 
 var handleSessionError = function(socket) {
