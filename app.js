@@ -580,8 +580,8 @@ var totalUsers = function() {
   }, 0)
 };
 
-var attachPlayerToGame = function(game, socket, user) {
-  var player = game.addPlayer(socket, user);
+var attachPlayerToGame = function(game, socket, user, role) {
+  var player = game.addPlayer(socket, user, role);
 
   socket.on('disconnect', function(socket) {
     logger.info(user.gaming_id + " disconnected.");
@@ -661,13 +661,18 @@ io.sockets.on('connection', function (socket) {
           socket.emit('error', "Unable to look up user. Try refreshing your browser.");
           return;
         }
+        var role;
+        _.find(dbgame.roles, function(gaming_id, role_slug) {
+          role = role_slug;
+          return gaming_id === user.gaming_id;
+        });
         var game = findActiveGameByDBGame(dbgame);
         if (!game) {
           game = loadGame(dbgame);
           logger.debug("Stuffing game into active_games: " + dbgame._id);
           active_games.push(game);
         }
-        attachPlayerToGame(game, socket, user);
+        attachPlayerToGame(game, socket, user, role);
       });
     });
   });
