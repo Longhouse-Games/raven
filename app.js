@@ -588,6 +588,8 @@ var attachPlayerToGame = function(game, socket, user, role) {
     logger.info('connected users: ', totalUsers());
   });
 
+  socket.emit('userdata', { username: user.gaming_id, role: role });
+
   logger.debug('joined game');
   logger.debug('active games: ' + active_games.length);
   logger.info('connected users: ' + totalUsers());
