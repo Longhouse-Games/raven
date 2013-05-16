@@ -569,48 +569,10 @@ io.set('authorization', function (data, accept) {
   accept(null, true);
 });
 
-var Table = function(game, dbgame) {
-  return {
-    game: game,
-    dbgame: dbgame
-  };
-};
-// TODO tables are currently never unloaded. Should unload them after all players disconnect
-var tables = [];
+var Table = function(dbgame) {
+  var game;
+  var players = {}; //indexed by gaming_id
 
-var totalUsers = function() {
-  return _.reduce(tables, function(accum, table) {
-    return accum + table.game.getPlayerCount();
-  }, 0)
-};
-
-var attachPlayerToGame = function(game, socket, user, role) {
-  var player = game.addPlayer(socket, user, role);
-
-  socket.on('disconnect', function(socket) {
-    logger.info(user.gaming_id + " disconnected.");
-    logger.info('connected users: ', totalUsers());
-  });
-
-  socket.emit('userdata', { username: user.gaming_id, role: role });
-
-  logger.debug('joined table');
-  logger.debug('active tables: ' + tables.length);
-  logger.info('connected users: ' + totalUsers());
-}
-
-var findTable = function(dbgame) {
-  var i = 0;
-  for(i = 0; i < tables.length; i++) {
-    tmp = tables[i].dbgame;
-    if (tmp._id.equals(dbgame._id)) {
-      return tables[i];
-    }
-  }
-  return null;
-}
-
-var loadGame = function(dbgame) {
   var roles = {};
   _.each(metadata.roles, function(role) {
     roles[role.slug] = dbgame.roles[role.slug]
@@ -626,15 +588,66 @@ var loadGame = function(dbgame) {
     game_version: '1.0',
     players: roles
   });
-  var factory = null;
+
+  var raven = {
+    broadcast: function(message, data) {
+      _.each(players, function(player, gaming_id) {
+        player.socket.emit(message, data);
+      });
+    }
+  };
+
   if (_.isUndefined(dbgame.gameState) || dbgame.gameState === null) {
     logger.info("Creating new game: "+dbgame._id);
-    return Game(dbgame);
+    game = Game(raven, dbgame);
   } else {
     logger.debug("Restoring old game: "+dbgame._id);
-    return Game(dbgame, JSON.parse(dbgame.gameState));
+    game = Game(raven, dbgame, JSON.parse(dbgame.gameState));
   }
+
+  var addPlayer = function(socket, user, role) {
+    players[user.gaming_id] = { user: user, socket: socket, role: role};
+    game.addPlayer(socket, user, role);
+
+    socket.on('disconnect', function(socket) {
+      delete players[user.gaming_id];
+      logger.info(user.gaming_id + " disconnected.");
+      logger.info('connected users: ', totalUsers());
+    });
+
+    socket.emit('userdata', { username: user.gaming_id, role: role });
+
+    logger.debug('joined table');
+    logger.debug('active tables: ' + tables.length);
+    logger.info('connected users: ' + totalUsers());
+  }
+
+  return {
+    game: game,
+    dbgame: dbgame,
+    addPlayer: addPlayer
+  };
+};
+// TODO tables are currently never unloaded. Should unload them after all players disconnect
+var tables = [];
+
+var totalUsers = function() {
+  return _.reduce(tables, function(accum, table) {
+    return accum + table.game.getPlayerCount();
+  }, 0)
+};
+
+var findTable = function(dbgame) {
+  var i = 0;
+  for(i = 0; i < tables.length; i++) {
+    tmp = tables[i].dbgame;
+    if (tmp._id.equals(dbgame._id)) {
+      return tables[i];
+    }
+  }
+  return null;
 }
+
 
 var handleSessionError = function(socket) {
   socket.emit('session_error', "Invalid socket session. Please refresh your browser.");
@@ -674,12 +687,11 @@ io.sockets.on('connection', function (socket) {
         });
         var table = findTable(dbgame);
         if (!table) {
-          game = loadGame(dbgame);
-          table = Table(game, dbgame);
+          table = Table(dbgame);
           logger.debug("Stuffing game into tables: " + dbgame._id);
           tables.push(table);
         }
-        attachPlayerToGame(game, socket, user, role);
+        table.addPlayer(socket, user, role);
       });
     });
   });
