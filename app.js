@@ -569,11 +569,18 @@ io.set('authorization', function (data, accept) {
   accept(null, true);
 });
 
-var active_games = [];
+var Table = function(game, dbgame) {
+  return {
+    game: game,
+    dbgame: dbgame
+  };
+};
+// TODO tables are currently never unloaded. Should unload them after all players disconnect
+var tables = [];
 
 var totalUsers = function() {
-  return _.reduce(active_games, function(accum, server) {
-    return accum + server.getPlayerCount();
+  return _.reduce(tables, function(accum, table) {
+    return accum + table.game.getPlayerCount();
   }, 0)
 };
 
@@ -587,17 +594,17 @@ var attachPlayerToGame = function(game, socket, user, role) {
 
   socket.emit('userdata', { username: user.gaming_id, role: role });
 
-  logger.debug('joined game');
-  logger.debug('active games: ' + active_games.length);
+  logger.debug('joined table');
+  logger.debug('active tables: ' + tables.length);
   logger.info('connected users: ' + totalUsers());
 }
 
-var findActiveGameByDBGame = function(dbgame) {
+var findTable = function(dbgame) {
   var i = 0;
-  for(i = 0; i < active_games.length; i++) {
-    tmp = active_games[i].getDBGame();
+  for(i = 0; i < tables.length; i++) {
+    tmp = tables[i].dbgame;
     if (tmp._id.equals(dbgame._id)) {
-      return active_games[i];
+      return tables[i];
     }
   }
   return null;
@@ -665,11 +672,12 @@ io.sockets.on('connection', function (socket) {
           role = role_slug;
           return gaming_id === user.gaming_id;
         });
-        var game = findActiveGameByDBGame(dbgame);
-        if (!game) {
+        var table = findTable(dbgame);
+        if (!table) {
           game = loadGame(dbgame);
-          logger.debug("Stuffing game into active_games: " + dbgame._id);
-          active_games.push(game);
+          table = Table(game, dbgame);
+          logger.debug("Stuffing game into tables: " + dbgame._id);
+          tables.push(table);
         }
         attachPlayerToGame(game, socket, user, role);
       });
