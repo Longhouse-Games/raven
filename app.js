@@ -20,10 +20,9 @@ var _ = require('underscore'),
     moment = require('moment'),
     EGSNotifier = require('./lib/egs_notifier');
 
-function init(game) {
+function init(Game) {
 
   var me = this;
-  me.game = game;
 
   this.configure = function(options) {
     me.send_index = options.send_index;
@@ -67,8 +66,6 @@ if (KEY_FILE && CERT_FILE) {
 } else {
   app = express();
 }
-
-var Game = me.game;
 
 var server = http.createServer(app);
 var io = socketio.listen(server);
@@ -119,7 +116,7 @@ var gameSchema = new Schema({
   gameState: String
 });
 
-var Game = mongoose.model('Game', gameSchema);
+var GameModel = mongoose.model('Game', gameSchema);
 
 var find_or_create_session = function(gaming_id, session_id, next) {
   Session.findOne({ session_id: session_id }, function(err, session) {
@@ -434,7 +431,7 @@ var createGame = function(req, res) {
   var roles = {}
   roles[role1.slug] = player1;
   roles[role2.slug] = player2;
-  var dbgame = new Game({
+  var dbgame = new GameModel({
     is_in_progress: true,
     roles: roles
   });
@@ -471,7 +468,7 @@ var playGame = function(req, res, game_id, user) {
     return;
   }
 
-  Game.findOne({_id: game_id}, function(err, game) {
+  GameModel.findOne({_id: game_id}, function(err, game) {
     if (err || !game) {
       logger.error("Error looking up game '"+game_id+"'");
       res.send("Could not find game with id: " + game_id, 400);
@@ -625,10 +622,10 @@ var loadGame = function(dbgame) {
   var factory = null;
   if (_.isUndefined(dbgame.gameState) || dbgame.gameState === null) {
     logger.info("Creating new game: "+dbgame._id);
-    return me.game(dbgame);
+    return Game(dbgame);
   } else {
     logger.debug("Restoring old game: "+dbgame._id);
-    return me.game(dbgame, JSON.parse(dbgame.gameState));
+    return Game(dbgame, JSON.parse(dbgame.gameState));
   }
 }
 
@@ -651,7 +648,7 @@ io.sockets.on('connection', function (socket) {
       return;
     }
     var game_id = session.game_id;
-    Game.findOne({_id: game_id}, function(err, dbgame) {
+    GameModel.findOne({_id: game_id}, function(err, dbgame) {
       if (err || !dbgame) {
         logger.error("Unable to lookup game: "+game_id);
         socket.emit('error', "Unable to lookup requested game. Try refreshing your browser.");
