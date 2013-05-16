@@ -584,6 +584,7 @@ var attachPlayerToGame = function(game, socket, user) {
   var player = game.addPlayer(socket, user);
 
   socket.on('disconnect', function(socket) {
+    logger.info(user.gaming_id + " disconnected.");
     logger.info('connected users: ', totalUsers());
   });
 
