@@ -594,15 +594,19 @@ var Table = function(dbgame) {
       _.each(players, function(player, gaming_id) {
         player.socket.emit(message, data);
       });
+    },
+    save: function(gameStateDTO) {
+      dbgame.gameState = JSON.stringify(gameStateDTO);
+      dbgame.save(function(err) { if (err) throw err; });
     }
   };
 
   if (_.isUndefined(dbgame.gameState) || dbgame.gameState === null) {
     logger.info("Creating new game: "+dbgame._id);
-    game = Game(raven, dbgame);
+    game = Game(raven);
   } else {
     logger.debug("Restoring old game: "+dbgame._id);
-    game = Game(raven, dbgame, JSON.parse(dbgame.gameState));
+    game = Game(raven, JSON.parse(dbgame.gameState));
   }
 
   var addPlayer = function(socket, user, role) {
