@@ -611,6 +611,9 @@ var Table = function(dbgame) {
 
   var addPlayer = function(socket, user, role) {
     players[user.gaming_id] = { user: user, socket: socket, role: role};
+
+    socket.emit('userdata', { username: user.gaming_id, role: role });
+
     game.addPlayer(socket, user, role);
 
     socket.on('message', function(message) {
@@ -622,8 +625,6 @@ var Table = function(dbgame) {
       logger.info(user.gaming_id + " disconnected.");
       logger.info('connected users: ', totalUsers());
     });
-
-    socket.emit('userdata', { username: user.gaming_id, role: role });
 
     logger.debug('joined table');
     logger.debug('active tables: ' + tables.length);
