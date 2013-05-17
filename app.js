@@ -613,6 +613,10 @@ var Table = function(dbgame) {
     players[user.gaming_id] = { user: user, socket: socket, role: role};
     game.addPlayer(socket, user, role);
 
+    socket.on('message', function(message) {
+      raven.broadcast('message', { user: user.gaming_id, message: message.message});
+    });
+
     socket.on('disconnect', function(socket) {
       delete players[user.gaming_id];
       logger.info(user.gaming_id + " disconnected.");
