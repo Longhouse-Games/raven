@@ -33,6 +33,7 @@ var CAS_HOST = process.env.CAS_HOST || "cas.littlevikinggames.com";
 var CAS_URL = process.env.CAS_URL || "https://" + CAS_HOST + "/login";
 var CAS_HOST_FALLBACK = process.env.CAS_HOST_FALLBACK;
 var CAS_URL_FALLBACK = process.env.CAS_URL_FALLBACK || "https://" + CAS_HOST_FALLBACK + "/login";
+var SERVICE_URL = process.env.SERVICE_URL;
 var PORT = process.env.PORT || 3000;
 var EGS_HOST = process.env.EGS_HOST || "globalecco.org";
 var EGS_PORT = process.env.EGS_PORT || 443;
@@ -191,15 +192,16 @@ function authenticate_with_cas(request, response, callback) {
   logger.debug("Request.url: " + request.url);
   var path = request.url.replace(/[&|\?]?ticket=[\w|-]+/i, "");
   logger.debug("Path: " + path);
-  var hostname = protocol + request.headers.host + path;
-  logger.debug("CAS service: "+hostname);
-  var loginUrl = cas_url + '?service=' + encodeURIComponent(hostname);
+  var serviceURL = SERVICE_URL || (protocol + request.headers.host);
+  serviceURL += path;
+  logger.debug("CAS service: "+serviceURL);
+  var loginUrl = cas_url + '?service=' + encodeURIComponent(serviceURL);
   logger.debug("CAS Login URL: "+loginUrl);
 
   var base_url = "https://"+host;
   var casInstance = new cas({
     base_url: base_url,
-    service: hostname,
+    service: serviceURL,
     https: {
       rejectUnauthorized: false
     }
