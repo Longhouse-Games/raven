@@ -553,10 +553,8 @@ var debug = function(req, res) {
 // app.get(PREFIX+'/', debug);
 // app.get('/*', debug);
 
-// We use a regular expression here because incoming URLs are often of the form
-// '/gc/socket.io', or '/infochess/socket.io', and we need those URLs to still
-// operate with sockets. Clients should set their resource to 'foo/socket.io'
-io.set('resource', /\/[\w-]+\/socket.io/);
+//Clients should set their resource to 'PREFIX/socket.io', minus the initial trailing slash
+io.set('resource', PREFIX+"/socket.io");
 io.set('authorization', function (data, accept) {
   // check if there's a cookie header
   if (data.headers.cookie) {
