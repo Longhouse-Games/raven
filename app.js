@@ -601,6 +601,29 @@ var Table = function(dbgame) {
     save: function(gameStateDTO) {
       dbgame.gameState = JSON.stringify(gameStateDTO);
       dbgame.save(function(err) { if (err) throw err; });
+    },
+    /*
+     * Portal notification methods
+     */
+
+    /*
+     * Indicate that the player in `role` can take an action
+     */
+    notify: function(role) {
+      egs_notifier.move(role);
+    },
+    /*
+     * Indicate that the player in `role` has forfeit the game
+     */
+    forfeit: function(role) {
+      egs_notifier.forfeit(role);
+    },
+    /*
+     * Indicate that the game is over. The winner is specified by
+     * `winning_role`. `scores` contains the final scores
+     */
+    gameover: function(winning_role, scores) {
+      egs_notifier.gameover(winning_role, scores);
     }
   };
 
