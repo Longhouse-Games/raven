@@ -643,7 +643,7 @@ var Table = function(dbgame) {
     game.addPlayer(socket, user, role);
 
     socket.on('message', function(message) {
-      raven.broadcast('message', { user: user.gaming_id, message: message.message});
+      raven.broadcast('message', { user: user.gaming_id, message: message.message, role: role});
     });
 
     socket.on('disconnect', function(socket) {
