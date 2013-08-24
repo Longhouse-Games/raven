@@ -452,7 +452,7 @@ var createGame = function(req, res) {
         game_version: '1.0',
         players: roles
       });
-      egs_notifier.move(role1.slug);
+      egs_notifier.setPlayerState(Game.initialPlayerState());
     });
   });
 };
@@ -578,7 +578,7 @@ var Table = function(dbgame) {
 
   var roles = {};
   _.each(metadata.roles, function(role) {
-    roles[role.slug] = dbgame.roles[role.slug]
+    roles[role.slug] = dbgame.roles[role.slug];
   });
 
   var egs_notifier = new EGSNotifier.EGSNotifier({
@@ -607,11 +607,36 @@ var Table = function(dbgame) {
      */
 
     /*
-     * Indicate that the player in `role` can take an action
+     * Sets the waiting state for each role specified in `state`.
+     * `state` is an object which has roles for properties and their attention
+     * state for values. Valid values are "ATTN" and "PEND".
+     *
+     * "ATTN" indicates that the game is waiting for this player to
+     * provide input (for example, to take their turn). "PEND" means that
+     * the game is not waiting on this player (for example, it is the other
+     * player's turn).
+     *
+     * Example state:
+     * {
+     *   white: "ATTN",
+     *   black: "PEND"
+     * }
+     *
+     * As a short cut, one can call setPlayerState(role, state), which is the
+     * equivalent of doing setPlayerState({ role: state })
      */
-    notify: function(role) {
-      egs_notifier.move(role);
+    setPlayerState: function(state) {
+      if (arguments.length === 2) {
+        var singleState = {}
+        singleState[arguments[0]] = arguments[1];
+        egs_notifier.setPlayerState(singleState);
+      } else {
+        egs_notifier.setPlayerState(state);
+      }
     },
+    ATTN: "ATTN", // Indicates that the game is waiting for the player
+    PEND: "PEND", // Indicates that the game is not waiting for the player
+    OVER: "OVER", // Indicates that this player is done with the game.
     /*
      * Indicate that the player in `role` has forfeit the game
      */
