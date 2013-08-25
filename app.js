@@ -85,12 +85,6 @@ var metadata = Game.metadata;
 
 // global types
 var Schema = mongoose.Schema;
-var ChatSchema = new Schema({
-  time: {type: Date},
-  user: {type: String},
-  message: {type: String, trim: true}
-});
-var ChatModel = mongoose.model('Chat', ChatSchema);
 
 var userSchema = new Schema({
   gaming_id: {type: String, default: null },
@@ -114,7 +108,8 @@ var gameSchema = new Schema({
     }
     return results;
   }(metadata.roles),
-  gameState: String
+  gameState: String,
+  chat_messages: [{time: Date, user: String, role: String, message: {type: String, trim: true}}]
 });
 
 var GameModel = mongoose.model('Game', gameSchema);
@@ -154,20 +149,6 @@ var find_or_create_user = function(profile, session_id, next) {
       }
     });
   });
-};
-
-// helper functions
-var fetchRecentMessages = function(callback) {
-  var chatModel = mongoose.model('Chat');
-  chatModel
-    .find()
-    .sort('time', -1) // descending
-    .limit(5)
-    .exec(callback);
-};
-
-var saveMessageToMongo = function(data) {
-  new ChatModel({time: new Date(), user: data.user, message: data.message}).save();
 };
 
 function authenticate_with_cas(request, response, callback) {
@@ -667,8 +648,13 @@ var Table = function(dbgame) {
 
     game.addPlayer(socket, user, role);
 
+    socket.emit('chat_history', dbgame.chat_messages);
+
     socket.on('message', function(message) {
-      raven.broadcast('message', { user: user.gaming_id, message: message.message, role: role});
+      message = {user: user.gaming_id, message: message.message, role: role, time: new Date()};
+      dbgame.chat_messages.push(message);
+      dbgame.save();
+      raven.broadcast('message', message);
     });
 
     socket.on('disconnect', function(socket) {
