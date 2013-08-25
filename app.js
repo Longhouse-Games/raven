@@ -648,6 +648,7 @@ var Table = function(dbgame) {
 
     game.addPlayer(socket, user, role);
 
+    raven.broadcast('user_online', user.gaming_id);
     socket.emit('chat_history', dbgame.chat_messages);
 
     socket.on('message', function(message) {
@@ -659,6 +660,7 @@ var Table = function(dbgame) {
 
     socket.on('disconnect', function(socket) {
       delete players[user.gaming_id];
+      raven.broadcast('user_offline', user.gaming_id);
       logger.info(user.gaming_id + " disconnected.");
       logger.info('connected users: ', totalUsers());
     });
