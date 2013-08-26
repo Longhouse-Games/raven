@@ -237,10 +237,7 @@ function handleLogin(request, response, game_id, callback) {
 }
 
 applyHeaders = function(res) {
-  res.header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
-  res.header("Cache-Control", "no-cache, must-revalidate, max-age=0");
-  res.header('Last-Modified', moment().format());
-  res.header('Pragma', 'no-cache');
+   res.header("Cache-Control", "max-age=600");
 };
 
 app.configure(function() {
