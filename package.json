@@ -24,7 +24,7 @@
     "coffee-script" : "",
     "express": "3.0",
     "mongoose": "3.6",
-    "socket.io": "0.9",
+    "socket.io": "0.9.16",
     "underscore": "1.4",
     "moment": "2.0",
     "cookie": "0.0.5",
