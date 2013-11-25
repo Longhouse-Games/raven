@@ -551,8 +551,15 @@ io.set('authorization', function (data, accept) {
 });
 
 var Table = function(dbgame) {
+  var table = this;
   var game;
   var players = {}; //indexed by gaming_id
+  var draw_offered_by = dbgame.draw_offered_by; //keeps track of whether a draw has been offered and by whom
+  this.setDrawOfferedBy = function(val) {
+    table.draw_offered_by = val;
+    dbgame.draw_offered_by = val;
+    dbgame.save(function(err) { if (err) throw err; });
+  };
 
   var roles = {};
   _.each(metadata.roles, function(role) {
@@ -648,11 +655,73 @@ var Table = function(dbgame) {
     raven.broadcast('user_online', user.gaming_id);
     socket.emit('chat_history', dbgame.chat_messages);
 
-    socket.on('message', function(message) {
+    if (table.draw_offered_by && table.draw_offered_by !== user.gaming_id) {
+      socket.emit('draw_offered', {by: table.draw_offered_by});
+    }
+
+    var handleError = function(callback, data) {
+      try {
+        var result = callback(data);
+        return result;
+      } catch (e) {
+        socket.emit('error', e);
+        console.log("Error: ", e);
+        console.log(e.stack);
+      }
+    };
+
+    var logAndHandle = function(message, callback) {
+      socket.on(message, function(data) {
+        console.log("["+user.gaming_id+"] " + message + ": ", data);
+
+        return handleError(callback, data);
+      });
+    };
+
+    logAndHandle('message', function(message) {
       message = {user: user.gaming_id, message: message.message, role: role, time: new Date()};
       dbgame.chat_messages.push(message);
       dbgame.save();
       raven.broadcast('message', message);
+    });
+
+    logAndHandle('offer_draw', function() {
+      console.log(user.gaming_id + " is offering a draw.");
+      if (!game.hasStarted()) {
+        throw "Game has not started yet!";
+      }
+      if (table.draw_offered_by) {
+        throw "Draw has already been offered!";
+      }
+      table.setDrawOfferedBy(user.gaming_id);
+
+      raven.broadcast('draw_offered', {by: user.gaming_id});
+    });
+
+    logAndHandle('accept_draw', function() {
+      console.log(user.gaming_id + " has accepted the draw offer");
+      if (!table.draw_offered_by) {
+        throw "No draw has been offered!";
+      }
+      if (user.gaming_id === table.draw_offered_by) {
+        throw "You cannot accept your own draw!";
+      }
+      raven.broadcast('draw_accepted', null);
+      game.draw();
+      table.setDrawOfferedBy(null);
+      egs_notifier.draw();
+    });
+
+    logAndHandle('reject_draw', function() {
+      if (!table.draw_offered_by) {
+        throw "No draw has been offered!";
+      }
+      if (user.gaming_id === table.draw_offered_by) {
+        throw "You cannot reject your own draw!";
+      }
+      raven.broadcast('draw_rejected', null);
+      console.log(user.gaming_id + " has rejected the draw offer");
+      table.setDrawOfferedBy(null);
     });
 
     socket.on('disconnect', function(socket) {
