@@ -464,7 +464,7 @@ var playGame = function(req, res, game_id, user) {
 
     var requested_nickname = game.roles[role];
     if (user.gaming_id !== requested_nickname) {
-      respond_with_error(res, "Requested game role does not match the logged in user ('"+user.gaming_id+"').");
+      respond_with_error(res, "Requested game role ('"+requested_nickname+"') does not match the logged in user ('"+user.gaming_id+"').");
       logger.debug("Requested role: " + role + ", saved handle: " + requested_nickname + ", current handle: " + user.gaming_id);
       return;
     }
