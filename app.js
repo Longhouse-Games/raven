@@ -317,10 +317,12 @@ var egs_response = function(req, res, params, next) {
     var role1 = metadata.roles[0];
     var role2 = metadata.roles[1];
     var html = "";
-    html = html + "<b>With ECCO CAS server:</b><br>";
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
-    html = html + "<hr><b>With test CAS server:</b><br>";
+    if (!process.env.DISABLE_CAS) {
+      html = html + "<b>With ECCO CAS server:</b><br>";
+      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
+      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
+      html = html + "<hr><b>With test CAS server:</b><br>";
+    }
     html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
     html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
     res.send(html, { 'Content-Type': 'text/html' }, code);
