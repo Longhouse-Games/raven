@@ -26,7 +26,7 @@ app.configure(function() {
 
 app.post('/api/secure/jsonws/egs-portlet.gamebot', function(req, res) {
   var ctype = req.header('Content-Type');
-  if (ctype !== "text/plain; charset=utf-8") {
+  if (ctype !== "application/json; charset=utf-8") {
     var response = {
       "Status": "Error",
       "System Version": "0.1.0",

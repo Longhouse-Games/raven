@@ -31,7 +31,7 @@ function init(Game) {
 
   this.run = function() {
 
-var MONGO_URL = process.env.MONGO_URL || "mongodb://localhost/";
+var MONGO_URL = process.env.MONGO_URL || "mongodb://localhost";
 var DISABLE_CAS = process.env.DISABLE_CAS || false;
 var CAS_HOST = process.env.CAS_HOST || "cas.littlevikinggames.com";
 var CAS_URL = process.env.CAS_URL || "https://" + CAS_HOST + "/login";
@@ -434,6 +434,7 @@ var createGame = function(req, res) {
         port: EGS_PORT,
         username: EGS_USERNAME,
         password: EGS_PASSWORD,
+        notification_path: EGS_NOTIFICATION_PATH,
         game_id: dbgame._id,
         game_title: metadata.slug,
         game_version: '1.0',
