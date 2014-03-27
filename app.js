@@ -824,7 +824,31 @@ io.sockets.on('connection', function (socket) {
 
 var options = { server: { socketOptions: { connectTimeoutMS: 10000 }}};
 
-// lvg-<metadata.slug>  is the mongo collection
+// lvg-<metadata.slug>  is the mongo DATABASE instance
+// If local, then this turns out to be something like lvg-guerrilla-checkers
+// If remote, like on a Mongo service (MongoHQ), then the database name is 
+// predetermined by their subscriber configuration.  It seems safe, however,
+// because MongoHQ appears to simply ignore the extra info after the database
+// name, for example if you privide a MONGO_URL that has a database in it:
+//
+// mongodb://<user>:<passwd>@chang.mongohq.com:10005/abcdefg
+//
+// the collections get instantiated in that database, and the string here
+//
+//  '/lvg-guerrilla-checkers'
+//
+// is ignored.
+//
+//  NOTE: you can get free developer instances at MongoHQ to test this from
+//  a local dev machine.
+//
+// Of course, this means any Raven game needs to be on
+// an independent MongoHQ instance, since the 'lvg-' configuration string
+// is not operative and thus has no opportunity to ensure a private data space.
+// It might be nice in the future to plan for mulit-tennancy of Raven games
+// in the same database instance.  I guess this would mean prefixing collection
+// names with something unique about the current application instance.
+//
 
 mongoose.connect(MONGO_URL+'/lvg-'+metadata.slug, options, function(err) {
   if (err) {
