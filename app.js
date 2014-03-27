@@ -31,6 +31,7 @@ function init(Game) {
 
   this.run = function() {
 
+var MONGO_URL = process.env.MONGO_URL || "mongodb://localhost/";
 var DISABLE_CAS = process.env.DISABLE_CAS || false;
 var CAS_HOST = process.env.CAS_HOST || "cas.littlevikinggames.com";
 var CAS_URL = process.env.CAS_URL || "https://" + CAS_HOST + "/login";
@@ -43,6 +44,9 @@ var EGS_PORT = process.env.EGS_PORT || 443;
 var EGS_PROTOCOL = process.env.EGS_PROTOCOL || (EGS_PORT == 443 ? 'https' : 'http')
 var EGS_USERNAME = process.env.EGS_USERNAME;
 var EGS_PASSWORD = process.env.EGS_PASSWORD;
+var EGS_PROFILE_PATH = process.env.EGS_PROFILE_PATH || "/api/secure/jsonws/egs-portlet.gamingprofile/get";
+var EGS_NOTIFICATION_PATH = process.env.EGS_NOTIFICATION_PATH || "/api/secure/jsonws/egs-portlet.gamebot";
+
 var PREFIX = process.env.PREFIX || "";
 var AIRBRAKE_API_KEY = process.env.AIRBRAKE_API_KEY;
 
@@ -348,9 +352,12 @@ var egs_game_response = function(req, res, game_id, next) {
   }, next);
 };
 
+
+
+
 var getPlayerProfile = function(cas_handle, game_id, callback) {
   logger.debug("getPlayerProfile() called with cas_handle: "+cas_handle+", and gameid: " + game_id);
-  var path = "/api/secure/jsonws/egs-portlet.gamingprofile/get?ver=1.0&title="+metadata.slug+"&gid="+encodeURIComponent(game_id)+"&email="+encodeURIComponent(cas_handle);
+  var path = EGS_PROFILE_PATH+"?ver=1.0&title="+metadata.slug+"&gid="+encodeURIComponent(game_id)+"&email="+encodeURIComponent(cas_handle);
 
   var auth = (EGS_USERNAME && EGS_PASSWORD) ? (encodeURIComponent(EGS_USERNAME)+":"+EGS_PASSWORD+"@") : "";
   var url = EGS_PROTOCOL + "://"+auth+EGS_HOST+":"+EGS_PORT+path;
@@ -571,6 +578,7 @@ var Table = function(dbgame) {
   var egs_notifier = new EGSNotifier.EGSNotifier({
     host: EGS_HOST,
     port: EGS_PORT,
+    notification_path: EGS_NOTIFICATION_PATH,
     username: EGS_USERNAME,
     password: EGS_PASSWORD,
     game_id: dbgame._id,
@@ -814,7 +822,10 @@ io.sockets.on('connection', function (socket) {
 });
 
 var options = { server: { socketOptions: { connectTimeoutMS: 10000 }}};
-mongoose.connect('mongodb://localhost/lvg-'+metadata.slug, options, function(err) {
+
+// lvg-<metadata.slug>  is the mongo collection
+
+mongoose.connect(MONGO_URL+'/lvg-'+metadata.slug, options, function(err) {
   if (err) {
     throw err;
   }
