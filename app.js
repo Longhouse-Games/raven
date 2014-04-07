@@ -47,6 +47,14 @@ function init (Game) {
     var EGS_PROFILE_PATH = process.env.EGS_PROFILE_PATH || "/api/secure/jsonws/egs-portlet.gamingprofile/get";
     var EGS_NOTIFICATION_PATH = process.env.EGS_NOTIFICATION_PATH || "/api/secure/jsonws/egs-portlet.gamebot";
 
+    var LOBBY_MODE = process.env.LOBBY_MODE || "webservice";
+    var RABBIT_HOST = process.env.RABBIT_HOST || "localhost";
+    var RABBIT_USERNAME = process.env.RABBIT_USERNAME || "guest";
+    var RABBIT_PASSWORD = process.env.RABBIT_PASSWORD || "guest";
+    var RABBIT_VHOST = process.env.RABBIT_VHOST || "";
+    var RABBIT_EXCHANGE = process.env.RABBIT_EXCHANGE || "ecco.exchange";
+
+
     var PREFIX = process.env.PREFIX || "";
     var AIRBRAKE_API_KEY = process.env.AIRBRAKE_API_KEY;
 
@@ -87,15 +95,6 @@ function init (Game) {
 
     var metadata = Game.metadata;
 
-    var notification_service = new EGSNotifier.EGSNotifier({
-      host: EGS_HOST,
-      port: EGS_PORT,
-      username: EGS_USERNAME,
-      password: EGS_PASSWORD,
-      notification_path: EGS_NOTIFICATION_PATH,
-      game_title: metadata.slug,
-      game_version: '1.0'
-    });
 
 // global types
     var Schema = mongoose.Schema;
@@ -419,24 +418,6 @@ function init (Game) {
     };
 
 
-    var createGameFromWebRequest = function (req, res) {
-      logger.debug("Creating game.");
-      var lang = req.lang;
-      var debug = req.debug;
-      var app = req.app;
-      var role1 = metadata.roles[0];
-      var role2 = metadata.roles[1];
-      var player1 = req.param('role1') || req.param(role1.slug);
-      var player2 = req.param('role2') || req.param(role2.slug);
-
-      var game_spec = createGame(lang, debug, app, role1, role2, player1, player2);
-
-      egs_game_response(req, res, game_spec.dbgame._id, function () {
-        notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
-      });
-
-    };
-
     var createGame = function(lang, debug, app, role1, role2, player1, player2) {
 
       if (!player1 || !player2) {
@@ -463,6 +444,64 @@ function init (Game) {
       return {roles: roles, dbgame: dbgame};
     };
 
+    var createGameFromAMQPRequest = function(message) {
+      logger.debug("Back in raven...");
+      logger.debug(message.toString());
+
+      var req = JSON.parse(message.toString());
+      logger.debug(JSON.stringify(req));
+
+      logger.debug("Slug0 = " + metadata.roles[0].slug);
+      logger.debug("Slug1 = " + metadata.roles[1].slug);
+      var r1 = metadata.roles[0].slug;
+      var r2 = metadata.roles[1].slug;
+      var player1 = req[r1];
+      var player2 = req[r2];
+
+      logger.debug("Player1 = " + player1);
+      logger.debug("Player2 = " + player2);
+
+
+      var game_spec = createGame(req.lang, req.debug, req.app,  metadata.roles[0],  metadata.roles[1], player1, player2)
+
+      // Wrong time for this since the
+      // new game ackn hasn't even been sent yet.
+      // notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
+      game_spec.initialPlayerState = Game.initialPlayerState();
+      return game_spec;
+    };
+
+    var createGameFromWebRequest = function (req, res) {
+      logger.debug("Creating game.");
+      var lang = req.lang;
+      var debug = req.debug;
+      var app = req.app;
+      var role1 = metadata.roles[0];
+      var role2 = metadata.roles[1];
+      var player1 = req.param('role1') || req.param(role1.slug);
+      var player2 = req.param('role2') || req.param(role2.slug);
+
+      var game_spec = createGame(lang, debug, app, role1, role2, player1, player2);
+
+      egs_game_response(req, res, game_spec.dbgame._id, function () {
+        notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
+      });
+
+    };
+
+    var notification_service = new EGSNotifier.EGSNotifier({
+      mode: LOBBY_MODE,
+      host: LOBBY_MODE === "webservice" ? EGS_HOST : RABBIT_HOST,
+      port: EGS_PORT,
+      username: LOBBY_MODE === "webservice" ? EGS_USERNAME : RABBIT_USERNAME,
+      password: LOBBY_MODE === "webservice" ? EGS_PASSWORD : RABBIT_PASSWORD,
+      notification_path: EGS_NOTIFICATION_PATH,
+      amqp_vhost: RABBIT_VHOST,
+      amqp_exchange: RABBIT_EXCHANGE,
+      game_title: metadata.slug,
+      game_version: '1.0',
+      amqp_newHandler: createGameFromAMQPRequest
+    });
 
     var playGame = function (req, res, game_id, user) {
       logger.debug("Request to play game '" + game_id + "' from user:", user);
