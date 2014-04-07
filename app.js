@@ -287,7 +287,7 @@ function init (Game) {
     handleNew = function (req, res) {
       logger.debug("New game requested.");
       authenticateAppServer(req, res, function () {
-        return createGame(req, res);
+        return createGameFromWebRequest(req, res);
       });
     };
 
@@ -418,7 +418,8 @@ function init (Game) {
       response.send(message, 400);
     };
 
-    var createGame = function (req, res) {
+
+    var createGameFromWebRequest = function (req, res) {
       logger.debug("Creating game.");
       var lang = req.lang;
       var debug = req.debug;
@@ -427,13 +428,24 @@ function init (Game) {
       var role2 = metadata.roles[1];
       var player1 = req.param('role1') || req.param(role1.slug);
       var player2 = req.param('role2') || req.param(role2.slug);
+
+      var game_spec = createGame(lang, debug, app, role1, role2, player1, player2);
+
+      egs_game_response(req, res, game_spec.dbgame._id, function () {
+        notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
+      });
+
+    };
+
+    var createGame = function(lang, debug, app, role1, role2, player1, player2) {
+
       if (!player1 || !player2) {
         logger.error("Got invalid request for new game:");
         logger.error(req.query);
         return egs_error_response(req, res, "Both roles must be provided (" + role1.slug + " and " + role2.slug + ")");
       }
 
-      var roles = {}
+      var roles = {};
       roles[role1.slug] = player1;
       roles[role2.slug] = player2;
       var dbgame = new GameModel({
@@ -446,11 +458,11 @@ function init (Game) {
         }
 
         logger.debug("Created game: " + game._id + ". Roles: " + game.roles);
-        egs_game_response(req, res, game._id, function () {
-          notification_service.setPlayerState(Game.initialPlayerState(), dbgame._id, roles);
-        });
       });
+
+      return {roles: roles, dbgame: dbgame};
     };
+
 
     var playGame = function (req, res, game_id, user) {
       logger.debug("Request to play game '" + game_id + "' from user:", user);
