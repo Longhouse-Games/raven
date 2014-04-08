@@ -371,6 +371,20 @@ function init (Game) {
 
 
     var getPlayerProfile = function (cas_handle, game_id, callback) {
+
+      if(LOBBY_MODE === "amqp") {
+
+        /*
+         {
+         "gameInstanceId": "xxx",
+         "gamingId":"xxxxxxx",
+         "casId": "some email address"
+         }
+         */
+        var response = notification_service.getPlayerProfile(cas_handle, game_id)
+        return;
+      };
+
       logger.debug("getPlayerProfile() called with cas_handle: " + cas_handle + ", and gameid: " + game_id);
       var path = EGS_PROFILE_PATH + "?ver=1.0&title=" + metadata.slug + "&gid=" + encodeURIComponent(game_id) + "&email=" + encodeURIComponent(cas_handle);
 
@@ -463,10 +477,6 @@ function init (Game) {
 
 
       var game_spec = createGame(req.lang, req.debug, req.app,  metadata.roles[0],  metadata.roles[1], player1, player2)
-
-      // Wrong time for this since the
-      // new game ackn hasn't even been sent yet.
-      // notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
       game_spec.initialPlayerState = Game.initialPlayerState();
       return game_spec;
     };
@@ -701,7 +711,6 @@ function init (Game) {
          */
         gameover: function (winning_role, scores) {
           notification_service.gameover(winning_role, scores, game_id, roles);
-//          egs_notifier.gameover(winning_role, scores);
         }
       };
 
