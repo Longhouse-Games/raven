@@ -313,43 +313,61 @@ function init (Game) {
       }
 
       var code = params.stat === "ERROR" ? 400 : 200;
+
       if (format === "xml") {
         var body = "<stat>" + params.stat + "</stat>";
+
         if (params.msg) {
           body = body + "<msg>" + params.msg + "</msg>";
         }
+
         if (params.game_id) {
           body = body + "<glst><cnt>1</cnt><game><gid>" + params.game_id + "</gid></game></glst>";
         }
+
         res.send(body, { 'Content-Type': 'application/xml' }, code);
-      } else if (format === "json") {
+      }
+      else if (format === "json") {
+
         var json = { stat: params.stat };
+
         if (params.msg) {
           json.msg = params.msg;
         }
+
         if (params.game_id) {
           json.glst = {
             cnt: 1,
             game: { gid: params.game_id }
           };
         }
+
+        if (params.update) {
+          json.update = params.update;
+        }
+
         res.json(json, code);
+
       } else if (format === "html" && req.param("dbg") === "1") {
         var role1 = metadata.roles[0];
         var role2 = metadata.roles[1];
         var html = "";
+
         if (!process.env.DISABLE_CAS) {
           html = html + "<b>With ECCO CAS server:</b><br>";
           html = html + "<a href='" + PREFIX + "/play?gid=" + params.game_id + "&role=" + role1.slug + "&handle=" + req.param(role1.slug) + "&app=BRSR'>Join game '" + params.game_id + "' as " + role1.name + "</a> (" + req.param(role1.slug) + ")<br>";
           html = html + "<a href='" + PREFIX + "/play?gid=" + params.game_id + "&role=" + role2.slug + "&handle=" + req.param(role2.slug) + "&app=BRSR'>Join game '" + params.game_id + "' as " + role2.name + "</a> (" + req.param(role2.slug) + ")<br>";
           html = html + "<hr><b>With test CAS server:</b><br>";
         }
+
         html = html + "<a href='" + PREFIX + "/play?gid=" + params.game_id + "&cas=test&role=" + role1.slug + "&handle=" + req.param(role1.slug) + "&app=BRSR'>Join game '" + params.game_id + "' as " + role1.name + "</a> (" + req.param(role1.slug) + ")<br>";
         html = html + "<a href='" + PREFIX + "/play?gid=" + params.game_id + "&cas=test&role=" + role2.slug + "&handle=" + req.param(role2.slug) + "&app=BRSR'>Join game '" + params.game_id + "' as " + role2.name + "</a> (" + req.param(role2.slug) + ")<br>";
         res.send(html, { 'Content-Type': 'text/html' }, code);
-      } else {
+      }
+      else {
         res.send("Invalid format: " + req.fmt + ". Must be one of 'json' or 'xml'", 400);
       }
+
       if (typeof next === 'function') {
         next();
       }
@@ -362,17 +380,23 @@ function init (Game) {
       });
     };
 
-    var egs_game_response = function (req, res, game_id, next) {
-      egs_response(req, res, {
+    var egs_game_response = function (req, res, game_spec, next) {
+
+      // update is actually a list of updates
+      var payload = {
         stat: "OK",
-        game_id: game_id
-      }, next);
+        game_id: game_spec.dbgame._id,
+        update: game_spec.update
+      }
+
+      egs_response(req, res, payload, next);
+
     };
 
 
     var getPlayerProfile = function (cas_handle, game_id, callback) {
 
-      if(LOBBY_MODE === "amqp") {
+      if (LOBBY_MODE === "amqp") {
 
         /*
          {
@@ -383,7 +407,8 @@ function init (Game) {
          */
         var response = notification_service.getPlayerProfile(cas_handle, game_id)
         return;
-      };
+      }
+      ;
 
       logger.debug("getPlayerProfile() called with cas_handle: " + cas_handle + ", and gameid: " + game_id);
       var path = EGS_PROFILE_PATH + "?ver=1.0&title=" + metadata.slug + "&gid=" + encodeURIComponent(game_id) + "&email=" + encodeURIComponent(cas_handle);
@@ -432,7 +457,7 @@ function init (Game) {
     };
 
 
-    var createGame = function(lang, debug, app, role1, role2, player1, player2) {
+    var createGame = function (lang, debug, app, role1, role2, player1, player2) {
 
       if (!player1 || !player2) {
         logger.error("Got invalid request for new game:");
@@ -458,7 +483,7 @@ function init (Game) {
       return {roles: roles, dbgame: dbgame};
     };
 
-    var createGameFromAMQPRequest = function(message) {
+    var createGameFromAMQPRequest = function (message) {
       logger.debug("Back in raven...");
       logger.debug(message.toString());
 
@@ -476,7 +501,7 @@ function init (Game) {
       logger.debug("Player2 = " + player2);
 
 
-      var game_spec = createGame(req.lang, req.debug, req.app,  metadata.roles[0],  metadata.roles[1], player1, player2)
+      var game_spec = createGame(req.lang, req.debug, req.app, metadata.roles[0], metadata.roles[1], player1, player2)
       game_spec.initialPlayerState = Game.initialPlayerState();
       return game_spec;
     };
@@ -492,11 +517,12 @@ function init (Game) {
       var player2 = req.param('role2') || req.param(role2.slug);
 
       var game_spec = createGame(lang, debug, app, role1, role2, player1, player2);
+      var first_update = notification_service.getPlayerStateUpdate(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
+      game_spec.update = first_update;
 
-      egs_game_response(req, res, game_spec.dbgame._id, function () {
-        notification_service.setPlayerState(Game.initialPlayerState(), game_spec.dbgame._id, game_spec.roles);
+      egs_game_response(req, res, game_spec, function () {
+        logger.debug(res);
       });
-
     };
 
     var notification_service = new EGSNotifier.EGSNotifier({
