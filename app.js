@@ -314,17 +314,23 @@ var egs_response = function(req, res, params, next) {
     }
     res.json(json, code);
   } else if (format === "html" && req.param("dbg") === "1") {
-    var role1 = metadata.roles[0];
-    var role2 = metadata.roles[1];
+    // var role1 = metadata.roles[0];
+    // var role2 = metadata.roles[1];
     var html = "";
     if (!process.env.DISABLE_CAS) {
       html = html + "<b>With ECCO CAS server:</b><br>";
-      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
-      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
+      _.each(metadata.roles, function(roleData) {
+        html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+roleData.slug+"&handle="+req.param(roleData.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+roleData.name+"</a> ("+req.param(roleData.slug)+")<br>";
+      });
+      // html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
+      // html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
       html = html + "<hr><b>With test CAS server:</b><br>";
     }
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
+    _.each(metadata.roles, function(roleData) {
+      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+roleData.slug+"&handle="+req.param(roleData.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+roleData.name+"</a> ("+req.param(roleData.slug)+")<br>";
+    });
+    // html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
+    // html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
     res.send(html, { 'Content-Type': 'text/html' }, code);
   } else {
     res.send("Invalid format: " + req.fmt+". Must be one of 'json' or 'xml'", 400);
@@ -445,8 +451,14 @@ var playGame = function(req, res, game_id, user) {
     res.send("role is a required parameter", 400);
     return;
   }
-  if (role !== metadata.roles[0].slug && role !== metadata.roles[1].slug) {
-    res.send("role must be one of '"+metadata.roles[0].slug+"' or '"+metadata.roles[1].slug+"'");
+  var isRoleValid = false;
+  _.each(metadata.roles, function(roleData) {
+    if (roleData.slug === role) {
+      isRoleValid = true;
+    }
+  });
+  if (!isRoleValid) {
+    res.send("role invalid");
     return;
   }
 
