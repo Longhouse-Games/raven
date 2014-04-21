@@ -406,19 +406,15 @@ var createGame = function(req, res) {
   var lang = req.lang;
   var debug = req.debug;
   var app = req.app;
-  var role1 = metadata.roles[0];
-  var role2 = metadata.roles[1];
-  var player1 = req.param('role1') || req.param(role1.slug);
-  var player2 = req.param('role2') || req.param(role2.slug);
-  if (!player1 || !player2) {
-    logger.error("Got invalid request for new game:");
-    logger.error(req.query);
-    return egs_error_response(req, res, "Both roles must be provided ("+role1.slug+" and "+role2.slug+")");
-  }
 
+  var players = [];
   var roles = {}
-  roles[role1.slug] = player1;
-  roles[role2.slug] = player2;
+  _.each(metadata.roles, function(roleData) {
+    var player = req.param('role' + players.length + 1) || req.param(roleData.slug);
+    players.push(player);
+    roles[roleData.slug] = player;
+  });
+
   var dbgame = new GameModel({
     is_in_progress: true,
     roles: roles
