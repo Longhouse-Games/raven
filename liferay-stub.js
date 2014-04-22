@@ -63,7 +63,7 @@ app.get('/api/secure/jsonws/egs-portlet.gamingprofile/get', function(req, res) {
     results.gamingId = {
       "foo": "foo",
       "bar": "bar",
-      "spec": "spec",
+      "obs": "obs"
     }[email];
   }
   res.send(results);
