@@ -1,4 +1,5 @@
 var express = require('express');
+var logger = require('./lib/logger').logger;
 
 var port = process.env.EGS_PORT || 4000;
 if (process.argv && process.argv[2])
@@ -26,7 +27,7 @@ app.configure(function() {
 
 app.post('/api/secure/jsonws/egs-portlet.gamebot', function(req, res) {
   var ctype = req.header('Content-Type');
-  if (ctype !== "text/plain; charset=utf-8") {
+  if (ctype !== "application/json; charset=utf-8") {
     var response = {
       "Status": "Error",
       "System Version": "0.1.0",
@@ -38,9 +39,10 @@ app.post('/api/secure/jsonws/egs-portlet.gamebot', function(req, res) {
     return;
   }
   var payload = JSON.parse(req.rawBody).params.payload;
+  logger.debug("lobby update received " + payload);
   var updates = payload.updates;
   if (updates)
-    console.log(updates);
+    logger.debug(updates);
   var response = {
     "Status": "OK",
     "System Version": "0.1.0",
@@ -52,6 +54,8 @@ app.post('/api/secure/jsonws/egs-portlet.gamebot', function(req, res) {
 });
 
 app.get('/api/secure/jsonws/egs-portlet.gamingprofile/get', function(req, res) {
+
+  logger.debug("get profile " + req.param('email'));
   var results = {
     gameInstanceId: "foo",
     gamingId: "bar",
@@ -66,6 +70,7 @@ app.get('/api/secure/jsonws/egs-portlet.gamingprofile/get', function(req, res) {
       "obs": "obs"
     }[email];
   }
+  logger.debug("returning " + results);
   res.send(results);
 });
 
