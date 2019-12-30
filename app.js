@@ -20,6 +20,8 @@ var mongoose = require('mongoose')
   , airbrake = require('airbrake')
   , util = require('util');
 
+mongoose.plugin(schema => { schema.options.usePushEach = true });
+
 var _ = require('underscore'),
     moment = require('moment'),
     EGSNotifier = require('./lib/egs_notifier');
