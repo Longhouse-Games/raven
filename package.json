@@ -20,7 +20,7 @@
     "node": "~10.16"
   },
   "dependencies": {
-    "airbrake": "0.2",
+    "airbrake": "2.1",
     "cas": "git://github.com/Longhouse-Games/node-cas.git",
     "coffee-script": "",
     "cookie": "0.0.5",
