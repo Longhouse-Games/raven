@@ -5,9 +5,8 @@ if (process.argv && process.argv[2])
 {
   port = process.argv[2];
 }
-var app = express.createServer(
-  express.logger()
-);
+
+var app = express();
 
 function rawBody(req, res, next) {
   req.setEncoding('utf8');
@@ -20,9 +19,7 @@ function rawBody(req, res, next) {
   });
 }
 
-app.configure(function() {
-  app.use(rawBody);
-});
+app.use(rawBody);
 
 app.post('/api/secure/jsonws/egs-portlet.gamebot', function(req, res) {
   var ctype = req.header('Content-Type');

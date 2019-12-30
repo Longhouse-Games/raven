@@ -6,6 +6,10 @@ var fs = require('fs'),
     express = require('express'),
     logger = require('./lib/logger').logger;
 
+var session = require('express-session')
+var cookieParser = require('cookie-parser')
+var sharedsession = require("express-socket.io-session");
+
 var mongoose = require('mongoose')
   , socketio = require('socket.io')
   , assert = require('assert')
@@ -49,6 +53,8 @@ var AIRBRAKE_API_KEY = process.env.AIRBRAKE_API_KEY;
 var KEY_FILE = process.env.KEY_FILE;
 var CERT_FILE = process.env.CERT_FILE;
 
+var metadata = Game.metadata;
+
 var app;
 
 var use_ssl = false;
@@ -68,8 +74,51 @@ if (KEY_FILE && CERT_FILE) {
   app = express();
 }
 
+//app.use(function(req, res, next) {
+//  res.header("Access-Control-Allow-Origin", "localhost:4000"); // update to match the domain you will make the request from
+//  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//  next();
+//});
+
+app.use(cookieParser());
+//app.use(session({secret: 'secret', key: 'express.sid'}));
+
+//var session_store = new MemoryStore();
+//app.use(session({ store: session_store, secret: 'secret', key: 'express.sid'}));
+
+var MemoryStore = require('memorystore')(session)
+var memoryStore = new MemoryStore({
+  checkPeriod: 86400000 // prune expired entries every 24h
+})
+
+var sessionMiddleware = session({
+  store: memoryStore,
+  secret: "secret",
+  key: "express.sid"
+});
+
+app.use(sessionMiddleware);
+
+//app.use(session({
+//  cookie: { maxAge: 86400000 },
+//  store: memoryStore,
+//  secret: 'secret',
+//  key: 'express.sid'
+//}))
+
 var server = http.createServer(app);
-var io = socketio.listen(server);
+
+var io = socketio(server);
+//io.set('origins', '*:*');
+
+//io.use(sharedsession(session));
+io.use(function(socket, next) {
+  sessionMiddleware(socket.request, socket.request.res, next);
+});
+
+server.listen(PORT, function() {
+  logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
+});
 
 if (AIRBRAKE_API_KEY) {
   var client = airbrake.createClient(AIRBRAKE_API_KEY);
@@ -80,8 +129,6 @@ if (AIRBRAKE_API_KEY) {
 
 // global variables
 var connectedUsers = 0;
-
-var metadata = Game.metadata;
 
 // global types
 var Schema = mongoose.Schema;
@@ -239,11 +286,6 @@ function handleLogin(request, response, game_id, callback) {
 applyHeaders = function(res) {
    res.header("Cache-Control", "max-age=600");
 };
-
-app.configure(function() {
-  app.use(express.cookieParser());
-  app.use(express.session({secret: 'secret', key: 'express.sid'}));
-});
 
 serve_path = function(req, res, path) {
   applyHeaders(res);
@@ -770,12 +812,13 @@ var handleSessionError = function(socket) {
 };
 
 io.sockets.on('connection', function (socket) {
-  if (!socket.handshake.sessionID) {
+  var session_id = socket.request.sessionID;
+  if (!session_id) {
     // This occurs when a client reconnects after server restarts
     handleSessionError(socket);
     return;
   }
-  Session.findOne({session_id: socket.handshake.sessionID}, function(err, session) {
+  Session.findOne({session_id: session_id}, function(err, session) {
     if (err) {
       throw "Error looking up session: " + err;
     }
@@ -819,11 +862,6 @@ mongoose.connect('mongodb://localhost/lvg-'+metadata.slug, options, function(err
     throw err;
   }
 });
-
-server.listen(PORT, function() {
-  logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
-});
-
 
   }; // function run()
 
