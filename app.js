@@ -35,6 +35,8 @@ function init(Game) {
 
   this.run = function() {
 
+var metadata = Game.metadata;
+
 var DISABLE_CAS = process.env.DISABLE_CAS || false;
 var CAS_HOST = process.env.CAS_HOST || "cas.littlevikinggames.com";
 var CAS_URL = process.env.CAS_URL || "https://" + CAS_HOST + "/login";
@@ -49,11 +51,10 @@ var EGS_USERNAME = process.env.EGS_USERNAME;
 var EGS_PASSWORD = process.env.EGS_PASSWORD;
 var PREFIX = process.env.PREFIX || "";
 var AIRBRAKE_API_KEY = process.env.AIRBRAKE_API_KEY;
+var MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/lvg-'+metadata.slug;
 
 var KEY_FILE = process.env.KEY_FILE;
 var CERT_FILE = process.env.CERT_FILE;
-
-var metadata = Game.metadata;
 
 var app;
 
@@ -857,7 +858,7 @@ io.sockets.on('connection', function (socket) {
 });
 
 var options = { server: { socketOptions: { connectTimeoutMS: 10000 }}};
-mongoose.connect('mongodb://localhost/lvg-'+metadata.slug, options, function(err) {
+mongoose.connect(MONGODB_URI, options, function(err) {
   if (err) {
     throw err;
   }
