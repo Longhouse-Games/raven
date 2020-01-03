@@ -51,7 +51,7 @@ var EGS_PORT = process.env.EGS_PORT || 443;
 var EGS_PROTOCOL = process.env.EGS_PROTOCOL || (EGS_PORT == 443 ? 'https' : 'http')
 var EGS_USERNAME = process.env.EGS_USERNAME;
 var EGS_PASSWORD = process.env.EGS_PASSWORD;
-var PREFIX = process.env.PREFIX || "";
+var GAME_PATH_PREFIX = process.env.GAME_PATH_PREFIX || "";
 var ROLLBAR_API_KEY = process.env.ROLLBAR_API_KEY;
 var MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/lvg-'+metadata.slug;
 
@@ -120,7 +120,7 @@ io.use(function(socket, next) {
 });
 
 server.listen(PORT, function() {
-  logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
+  logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + GAME_PATH_PREFIX);
 });
 
 if (ROLLBAR_API_KEY) {
@@ -297,11 +297,11 @@ serve_path = function(req, res, path) {
   me.send_asset(req, res, path);
 }
 serve_lib = function(req, res) {
-  var path = req.originalUrl.replace(new RegExp(PREFIX, ""), "");
+  var path = req.originalUrl.replace(new RegExp(GAME_PATH_PREFIX, ""), "");
   serve_path(req, res, path);
 }
 serve_assets = function(req, res) {
-  var path = "/assets" + req.originalUrl.replace(new RegExp(PREFIX, ""), "");
+  var path = "/assets" + req.originalUrl.replace(new RegExp(GAME_PATH_PREFIX, ""), "");
   serve_path(req, res, path);
 }
 
@@ -365,12 +365,12 @@ var egs_response = function(req, res, params, next) {
     var html = "";
     if (!process.env.DISABLE_CAS) {
       html = html + "<b>With ECCO CAS server:</b><br>";
-      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
-      html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
+      html = html + "<a href='"+GAME_PATH_PREFIX+"/play?gid="+params.game_id+"&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
+      html = html + "<a href='"+GAME_PATH_PREFIX+"/play?gid="+params.game_id+"&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
       html = html + "<hr><b>With test CAS server:</b><br>";
     }
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
-    html = html + "<a href='"+PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
+    html = html + "<a href='"+GAME_PATH_PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role1.slug+"&handle="+req.param(role1.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role1.name+"</a> ("+req.param(role1.slug)+")<br>";
+    html = html + "<a href='"+GAME_PATH_PREFIX+"/play?gid="+params.game_id+"&cas=test&role="+role2.slug+"&handle="+req.param(role2.slug)+"&app=BRSR'>Join game '"+params.game_id+"' as "+role2.name+"</a> ("+req.param(role2.slug)+")<br>";
     res.send(html, { 'Content-Type': 'text/html' }, code);
   } else {
     res.send("Invalid format: " + req.fmt+". Must be one of 'json' or 'xml'", 400);
@@ -535,20 +535,20 @@ var playGame = function(req, res, game_id, user) {
   });
 };
 
-app.post(PREFIX+'/new', function(req, res) {
+app.post(GAME_PATH_PREFIX+'/new', function(req, res) {
   handleNew(req, res);
 });
-app.get(PREFIX+'/new', function(req,res) {
+app.get(GAME_PATH_PREFIX+'/new', function(req,res) {
   handleNew(req, res);
 });
-app.post(PREFIX+'/play', function(req, res) {
+app.post(GAME_PATH_PREFIX+'/play', function(req, res) {
   handlePlay(req, res);
 });
-app.get(PREFIX+'/play', function(req, res) {
+app.get(GAME_PATH_PREFIX+'/play', function(req, res) {
   handlePlay(req, res);
 });
 
-app.get(PREFIX+'/credits', function (req, res) {
+app.get(GAME_PATH_PREFIX+'/credits', function (req, res) {
   var md = require("node-markdown").Markdown;
   fs.readFile('CREDITS.md', 'utf-8', function(err, credits) {
     if (err) {
@@ -561,11 +561,11 @@ app.get(PREFIX+'/credits', function (req, res) {
     res.send(html);
   });
 });
-app.get(PREFIX+'/status', function(req, res) {
+app.get(GAME_PATH_PREFIX+'/status', function(req, res) {
   res.send("Okay!");
 });
-app.get(PREFIX+'/lib/*', serve_lib);
-app.get(PREFIX+'/*', serve_assets);
+app.get(GAME_PATH_PREFIX+'/lib/*', serve_lib);
+app.get(GAME_PATH_PREFIX+'/*', serve_assets);
 var debug = function(req, res) {
   res.header("Content-Type", "text/html");
   var html = "";
@@ -576,11 +576,11 @@ var debug = function(req, res) {
 
   res.send(html);
 };
-// app.get(PREFIX+'/', debug);
+// app.get(GAME_PATH_PREFIX+'/', debug);
 // app.get('/*', debug);
 
-//Clients should set their resource to 'PREFIX/socket.io', minus the initial trailing slash
-io.set('resource', PREFIX+"/socket.io");
+//Clients should set their resource to 'GAME_PATH_PREFIX/socket.io', minus the initial trailing slash
+io.set('resource', GAME_PATH_PREFIX+"/socket.io");
 io.set('authorization', function (data, accept) {
   // check if there's a cookie header
   if (data.headers.cookie) {
