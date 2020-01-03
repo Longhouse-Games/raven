@@ -17,7 +17,7 @@ var mongoose = require('mongoose')
   , cookie = require('cookie')
   , http_request = require('request')
   , http = require('http')
-  , airbrake = require('airbrake')
+  , Rollbar = require('rollbar')
   , util = require('util');
 
 mongoose.plugin(schema => { schema.options.usePushEach = true });
@@ -52,7 +52,7 @@ var EGS_PROTOCOL = process.env.EGS_PROTOCOL || (EGS_PORT == 443 ? 'https' : 'htt
 var EGS_USERNAME = process.env.EGS_USERNAME;
 var EGS_PASSWORD = process.env.EGS_PASSWORD;
 var PREFIX = process.env.PREFIX || "";
-var AIRBRAKE_API_KEY = process.env.AIRBRAKE_API_KEY;
+var ROLLBAR_API_KEY = process.env.ROLLBAR_API_KEY;
 var MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/lvg-'+metadata.slug;
 
 var KEY_FILE = process.env.KEY_FILE;
@@ -123,12 +123,13 @@ server.listen(PORT, function() {
   logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + PREFIX);
 });
 
-if (AIRBRAKE_API_KEY) {
-  var client = airbrake.createClient(AIRBRAKE_API_KEY);
-  client.handleExceptions();
-  logger.info("Airbrake initialised.");
-//  app.error(client.expressHandler()); SEE: https://github.com/felixge/node-airbrake/issues/25
-}
+if (ROLLBAR_API_KEY) {
+var rollbar = new Rollbar({
+  accessToken: ROLLBAR_API_KEY,
+  captureUncaught: true,
+  captureUnhandledRejections: true
+});
+logger.info("Rollbar initialised.");
 
 // global variables
 var connectedUsers = 0;

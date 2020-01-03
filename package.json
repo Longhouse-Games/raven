@@ -20,7 +20,6 @@
     "node": "~10.16"
   },
   "dependencies": {
-    "airbrake": "0.2",
     "cas": "git://github.com/Longhouse-Games/node-cas.git",
     "coffee-script": "",
     "cookie": "0.0.5",
@@ -33,6 +32,7 @@
     "mongoose": "4.13.19",
     "node-markdown": "0.1",
     "request": "2.16",
+    "rollbar": "^2.14.4",
     "socket.io": "^2.2.0",
     "underscore": "1.4",
     "winston": "0.6"
