@@ -124,12 +124,13 @@ server.listen(PORT, function() {
 });
 
 if (ROLLBAR_API_KEY) {
-var rollbar = new Rollbar({
-  accessToken: ROLLBAR_API_KEY,
-  captureUncaught: true,
-  captureUnhandledRejections: true
-});
-logger.info("Rollbar initialised.");
+  var rollbar = new Rollbar({
+    accessToken: ROLLBAR_API_KEY,
+    captureUncaught: true,
+    captureUnhandledRejections: true
+  });
+  logger.info("Rollbar initialised.");
+}
 
 // global variables
 var connectedUsers = 0;
