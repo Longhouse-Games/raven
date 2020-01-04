@@ -52,7 +52,7 @@ var EGS_PROTOCOL = process.env.EGS_PROTOCOL || (EGS_PORT == 443 ? 'https' : 'htt
 var EGS_USERNAME = process.env.EGS_USERNAME;
 var EGS_PASSWORD = process.env.EGS_PASSWORD;
 var GAME_PATH_PREFIX = process.env.GAME_PATH_PREFIX || "";
-var ROLLBAR_API_KEY = process.env.ROLLBAR_API_KEY;
+var ROLLBAR_ACCESS_TOKEN = process.env.ROLLBAR_ACCESS_TOKEN;
 var MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/lvg-'+metadata.slug;
 
 var KEY_FILE = process.env.KEY_FILE;
@@ -61,6 +61,15 @@ var CERT_FILE = process.env.CERT_FILE;
 var app;
 
 var use_ssl = false;
+
+if (ROLLBAR_ACCESS_TOKEN) {
+  var rollbar = new Rollbar({
+    accessToken: ROLLBAR_ACCESS_TOKEN,
+    captureUncaught: true,
+    captureUnhandledRejections: true
+  });
+  logger.info("Rollbar initialised.");
+}
 
 if (KEY_FILE && CERT_FILE) {
   logger.info("Using SSL");
@@ -76,6 +85,8 @@ if (KEY_FILE && CERT_FILE) {
 } else {
   app = express();
 }
+
+app.use(rollbar.errorHandler());
 
 //app.use(function(req, res, next) {
 //  res.header("Access-Control-Allow-Origin", "localhost:4000"); // update to match the domain you will make the request from
@@ -122,15 +133,6 @@ io.use(function(socket, next) {
 server.listen(PORT, function() {
   logger.info("["+new Date()+"] "+metadata.name+" listening on http://localhost:" + PORT + GAME_PATH_PREFIX);
 });
-
-if (ROLLBAR_API_KEY) {
-  var rollbar = new Rollbar({
-    accessToken: ROLLBAR_API_KEY,
-    captureUncaught: true,
-    captureUnhandledRejections: true
-  });
-  logger.info("Rollbar initialised.");
-}
 
 // global variables
 var connectedUsers = 0;
