@@ -33,7 +33,7 @@
     "node-markdown": "0.1",
     "request": "2.16",
     "rollbar": "^2.14.4",
-    "socket.io": "^2.2.0",
+    "socket.io": "^2.4.0",
     "underscore": "1.4",
     "winston": "0.6"
   },
