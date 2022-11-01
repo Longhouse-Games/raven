@@ -38,6 +38,6 @@
     "winston": "0.6"
   },
   "devDependencies": {
-    "jasmine-node": ">=1.0.26"
+    "jasmine-node": ">=3.0.0"
   }
 }
